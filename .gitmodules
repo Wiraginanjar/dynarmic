@@ -1,27 +1,27 @@
 [submodule "biscuit"]
 	path = externals/biscuit
-	url = https://github.com/lioncash/biscuit.git
+	url = https://git.eden-emu.dev/eden-emu/biscuit.git
 [submodule "catch"]
 	path = externals/catch
-	url = https://github.com/catchorg/Catch2.git
+	url = https://git.eden-emu.dev/eden-emu/Catch2.git
 [submodule "fmt"]
 	path = externals/fmt
-	url = https://github.com/fmtlib/fmt.git
+	url = https://git.eden-emu.dev/eden-emu/fmt.git
 [submodule "mcl"]
 	path = externals/mcl
-	url = https://github.com/azahar-emu/mcl.git
+	url = https://git.eden-emu.dev/eden-emu/mcl.git
 [submodule "oaknut"]
 	path = externals/oaknut
-	url = https://github.com/merryhime/oaknut.git
+	url = https://git.eden-emu.dev/eden-emu/oaknut.git
 [submodule "robin-map"]
 	path = externals/robin-map
-	url = https://github.com/Tessil/robin-map.git
+	url = https://git.eden-emu.dev/eden-emu/robin-map.git
 [submodule "xbyak"]
 	path = externals/xbyak
-	url = https://github.com/herumi/xbyak.git
+	url = https://git.eden-emu.dev/eden-emu/xbyak.git
 [submodule "zycore"]
 	path = externals/zycore
-	url = https://github.com/zyantific/zycore-c.git
+	url = https://git.eden-emu.dev/eden-emu/zycore-c.git
 [submodule "zydis"]
 	path = externals/zydis
-	url = https://github.com/zyantific/zydis.git
+	url = https://git.eden-emu.dev/eden-emu/zydis.git
