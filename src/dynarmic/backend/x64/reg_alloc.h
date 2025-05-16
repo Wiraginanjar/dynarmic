@@ -13,6 +13,7 @@
 
 #include <mcl/stdint.hpp>
 #include <xbyak/xbyak.h>
+#include <boost/container/static_vector.hpp>
 
 #include "dynarmic/backend/x64/block_of_code.h"
 #include "dynarmic/backend/x64/hostloc.h"
@@ -103,11 +104,13 @@ private:
     IR::Value value;
 };
 
+// Ensure a cache line is used, this is primordial
+static_assert(sizeof(boost::container::static_vector<HostLoc, 28>) == 64);
 class RegAlloc final {
 public:
     using ArgumentInfo = std::array<Argument, IR::max_arg_count>;
 
-    explicit RegAlloc(BlockOfCode& code, std::vector<HostLoc> gpr_order, std::vector<HostLoc> xmm_order);
+    explicit RegAlloc(BlockOfCode& code, boost::container::static_vector<HostLoc, 28> gpr_order, boost::container::static_vector<HostLoc, 28> xmm_order);
 
     ArgumentInfo GetArgumentInfo(IR::Inst* inst);
     void RegisterPseudoOperation(IR::Inst* inst);
@@ -152,15 +155,15 @@ public:
 private:
     friend struct Argument;
 
-    std::vector<HostLoc> gpr_order;
-    std::vector<HostLoc> xmm_order;
+    boost::container::static_vector<HostLoc, 28> gpr_order;
+    boost::container::static_vector<HostLoc, 28> xmm_order;
 
-    HostLoc SelectARegister(const std::vector<HostLoc>& desired_locations) const;
+    HostLoc SelectARegister(const boost::container::static_vector<HostLoc, 28>& desired_locations) const;
     std::optional<HostLoc> ValueLocation(const IR::Inst* value) const;
 
-    HostLoc UseImpl(IR::Value use_value, const std::vector<HostLoc>& desired_locations);
-    HostLoc UseScratchImpl(IR::Value use_value, const std::vector<HostLoc>& desired_locations);
-    HostLoc ScratchImpl(const std::vector<HostLoc>& desired_locations);
+    HostLoc UseImpl(IR::Value use_value, const boost::container::static_vector<HostLoc, 28>& desired_locations);
+    HostLoc UseScratchImpl(IR::Value use_value, const boost::container::static_vector<HostLoc, 28>& desired_locations);
+    HostLoc ScratchImpl(const boost::container::static_vector<HostLoc, 28>& desired_locations);
     void DefineValueImpl(IR::Inst* def_inst, HostLoc host_loc);
     void DefineValueImpl(IR::Inst* def_inst, const IR::Value& use_inst);
 

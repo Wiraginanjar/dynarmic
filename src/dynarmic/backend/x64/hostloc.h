@@ -10,7 +10,9 @@
 
 namespace Dynarmic::Backend::X64 {
 
-enum class HostLoc {
+// Our static vector will contain 32 elements, stt. an uint16_t will fill up 64 bytes
+// (an entire cache line). Thanks.
+enum class HostLoc : uint16_t {
     // Ordering of the registers is intentional. See also: HostLocToX64.
     RAX,
     RCX,

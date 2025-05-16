@@ -15,6 +15,7 @@
 #include <mcl/bit/bit_field.hpp>
 #include <mcl/scope_exit.hpp>
 #include <mcl/stdint.hpp>
+#include <boost/container/static_vector.hpp>
 
 #include "dynarmic/backend/x64/a32_jitstate.h"
 #include "dynarmic/backend/x64/abi.h"
@@ -103,8 +104,8 @@ A32EmitX64::BlockDescriptor A32EmitX64::Emit(IR::Block& block) {
         code.DisableWriting();
     };
 
-    const std::vector<HostLoc> gpr_order = [this] {
-        std::vector<HostLoc> gprs{any_gpr};
+    const boost::container::static_vector<HostLoc, 28> gpr_order = [this] {
+        boost::container::static_vector<HostLoc, 28> gprs{any_gpr};
         if (conf.page_table) {
             gprs.erase(std::find(gprs.begin(), gprs.end(), HostLoc::R14));
         }

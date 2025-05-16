@@ -253,7 +253,7 @@ bool Argument::IsInMemory() const {
     return HostLocIsSpill(*reg_alloc.ValueLocation(value.GetInst()));
 }
 
-RegAlloc::RegAlloc(BlockOfCode& code, std::vector<HostLoc> gpr_order, std::vector<HostLoc> xmm_order)
+RegAlloc::RegAlloc(BlockOfCode& code, boost::container::static_vector<HostLoc, 28> gpr_order, boost::container::static_vector<HostLoc, 28> xmm_order)
         : gpr_order(gpr_order)
         , xmm_order(xmm_order)
         , hostloc_info(NonSpillHostLocCount + SpillCount)
@@ -364,7 +364,7 @@ Xbyak::Xmm RegAlloc::ScratchXmm(HostLoc desired_location) {
     return HostLocToXmm(ScratchImpl({desired_location}));
 }
 
-HostLoc RegAlloc::UseImpl(IR::Value use_value, const std::vector<HostLoc>& desired_locations) {
+HostLoc RegAlloc::UseImpl(IR::Value use_value, const boost::container::static_vector<HostLoc, 28>& desired_locations) {
     if (use_value.IsImmediate()) {
         return LoadImmediate(use_value, ScratchImpl(desired_locations));
     }
@@ -396,7 +396,7 @@ HostLoc RegAlloc::UseImpl(IR::Value use_value, const std::vector<HostLoc>& desir
     return destination_location;
 }
 
-HostLoc RegAlloc::UseScratchImpl(IR::Value use_value, const std::vector<HostLoc>& desired_locations) {
+HostLoc RegAlloc::UseScratchImpl(IR::Value use_value, const boost::container::static_vector<HostLoc, 28>& desired_locations) {
     if (use_value.IsImmediate()) {
         return LoadImmediate(use_value, ScratchImpl(desired_locations));
     }
@@ -423,7 +423,7 @@ HostLoc RegAlloc::UseScratchImpl(IR::Value use_value, const std::vector<HostLoc>
     return destination_location;
 }
 
-HostLoc RegAlloc::ScratchImpl(const std::vector<HostLoc>& desired_locations) {
+HostLoc RegAlloc::ScratchImpl(const boost::container::static_vector<HostLoc, 28>& desired_locations) {
     const HostLoc location = SelectARegister(desired_locations);
     MoveOutOfTheWay(location);
     LocInfo(location).WriteLock();
@@ -439,8 +439,8 @@ void RegAlloc::HostCall(IR::Inst* result_def,
     constexpr std::array<HostLoc, args_count> args_hostloc = {ABI_PARAM1, ABI_PARAM2, ABI_PARAM3, ABI_PARAM4};
     const std::array<std::optional<Argument::copyable_reference>, args_count> args = {arg0, arg1, arg2, arg3};
 
-    static const std::vector<HostLoc> other_caller_save = [args_hostloc]() {
-        std::vector<HostLoc> ret(ABI_ALL_CALLER_SAVE.begin(), ABI_ALL_CALLER_SAVE.end());
+    static const boost::container::static_vector<HostLoc, 28> other_caller_save = [args_hostloc]() {
+        boost::container::static_vector<HostLoc, 28> ret(ABI_ALL_CALLER_SAVE.begin(), ABI_ALL_CALLER_SAVE.end());
 
         ret.erase(std::find(ret.begin(), ret.end(), ABI_RETURN));
         for (auto hostloc : args_hostloc) {
@@ -519,8 +519,8 @@ void RegAlloc::EmitVerboseDebuggingOutput() {
     }
 }
 
-HostLoc RegAlloc::SelectARegister(const std::vector<HostLoc>& desired_locations) const {
-    std::vector<HostLoc> candidates = desired_locations;
+HostLoc RegAlloc::SelectARegister(const boost::container::static_vector<HostLoc, 28>& desired_locations) const {
+    boost::container::static_vector<HostLoc, 28> candidates = desired_locations; //Who let someone copy an ENTIRE VECTOR here?
 
     // Find all locations that have not been allocated..
     const auto allocated_locs = std::partition(candidates.begin(), candidates.end(), [this](auto loc) {
