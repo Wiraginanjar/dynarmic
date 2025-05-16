@@ -15,7 +15,7 @@
 #include <mcl/stdint.hpp>
 #include <mcl/type_traits/is_instance_of_template.hpp>
 #include <oaknut/oaknut.hpp>
-#include <tsl/robin_set.h>
+#include <ankerl/unordered_dense.h>
 
 #include "dynarmic/backend/arm64/stack_layout.h"
 #include "dynarmic/ir/cond.h"
@@ -335,7 +335,7 @@ private:
 
     mutable std::mt19937 rand_gen;
 
-    tsl::robin_set<const IR::Inst*> defined_insts;
+    ankerl::unordered_dense::set<const IR::Inst*> defined_insts;
 };
 
 template<typename T>

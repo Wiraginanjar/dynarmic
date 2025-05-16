@@ -16,7 +16,7 @@
 #include <mcl/assert.hpp>
 #include <mcl/stdint.hpp>
 #include <mcl/type_traits/is_instance_of_template.hpp>
-#include <tsl/robin_set.h>
+#include <ankerl/unordered_dense.h>
 
 #include "dynarmic/backend/riscv64/stack_layout.h"
 #include "dynarmic/ir/cond.h"

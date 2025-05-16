@@ -315,12 +315,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### robin-map
+### unordered_dense
 
 ```
 MIT License
 
-Copyright (c) 2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>
+Copyright (c) 2022 Martin Leitner-Ankerl
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

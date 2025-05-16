@@ -10,7 +10,7 @@
 #include <set>
 #include <tuple>
 
-#include <tsl/robin_map.h>
+#include <ankerl/unordered_dense.h>
 
 #include "dynarmic/backend/block_range_information.h"
 #include "dynarmic/backend/x64/a32_jitstate.h"
@@ -104,7 +104,7 @@ protected:
         DoNotFastmemMarker marker;
         bool recompile;
     };
-    tsl::robin_map<u64, FastmemPatchInfo> fastmem_patch_info;
+    ankerl::unordered_dense::map<u64, FastmemPatchInfo> fastmem_patch_info;
     std::set<DoNotFastmemMarker> do_not_fastmem;
     std::optional<DoNotFastmemMarker> ShouldFastmem(A32EmitContext& ctx, IR::Inst* inst) const;
     FakeCall FastmemCallback(u64 rip);

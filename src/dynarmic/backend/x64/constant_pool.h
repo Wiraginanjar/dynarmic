@@ -11,7 +11,7 @@
 #include <utility>
 
 #include <mcl/stdint.hpp>
-#include <tsl/robin_map.h>
+#include <ankerl/unordered_dense.h>
 #include <xbyak/xbyak.h>
 
 namespace Dynarmic::Backend::X64 {
@@ -40,7 +40,7 @@ private:
         }
     };
 
-    tsl::robin_map<ConstantT, void*, ConstantHash> constant_info;
+    ankerl::unordered_dense::map<ConstantT, void*, ConstantHash> constant_info;
 
     BlockOfCode& code;
     std::span<ConstantT> pool;

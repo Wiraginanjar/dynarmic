@@ -6,7 +6,7 @@
 #pragma once
 
 #include <biscuit/assembler.hpp>
-#include <tsl/robin_map.h>
+#include <ankerl/unordered_dense.h>
 
 #include "dynarmic/backend/riscv64/code_block.h"
 #include "dynarmic/backend/riscv64/emit_riscv64.h"
@@ -71,8 +71,8 @@ private:
     CodeBlock cb;
     biscuit::Assembler as;
 
-    tsl::robin_map<u64, CodePtr> block_entries;
-    tsl::robin_map<u64, EmittedBlockInfo> block_infos;
+    ankerl::unordered_dense::map<u64, CodePtr> block_entries;
+    ankerl::unordered_dense::map<u64, EmittedBlockInfo> block_infos;
 
     struct PreludeInfo {
         CodePtr end_of_prelude;

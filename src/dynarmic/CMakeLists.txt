@@ -506,7 +506,7 @@ target_link_libraries(dynarmic
         Boost::boost
         fmt::fmt
         merry::mcl
-        tsl::robin_map
+        unordered_dense::unordered_dense
 )
 if (DYNARMIC_USE_LLVM)
     target_include_directories(dynarmic PRIVATE ${LLVM_INCLUDE_DIRS})

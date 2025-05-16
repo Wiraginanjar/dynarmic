@@ -8,7 +8,7 @@
 #include <boost/icl/interval_map.hpp>
 #include <boost/icl/interval_set.hpp>
 #include <mcl/stdint.hpp>
-#include <tsl/robin_set.h>
+#include <ankerl/unordered_dense.h>
 
 namespace Dynarmic::Backend {
 
@@ -23,8 +23,8 @@ void BlockRangeInformation<ProgramCounterType>::ClearCache() {
 }
 
 template<typename ProgramCounterType>
-tsl::robin_set<IR::LocationDescriptor> BlockRangeInformation<ProgramCounterType>::InvalidateRanges(const boost::icl::interval_set<ProgramCounterType>& ranges) {
-    tsl::robin_set<IR::LocationDescriptor> erase_locations;
+ankerl::unordered_dense::set<IR::LocationDescriptor> BlockRangeInformation<ProgramCounterType>::InvalidateRanges(const boost::icl::interval_set<ProgramCounterType>& ranges) {
+    ankerl::unordered_dense::set<IR::LocationDescriptor> erase_locations;
     for (auto invalidate_interval : ranges) {
         auto pair = block_ranges.equal_range(invalidate_interval);
         for (auto it = pair.first; it != pair.second; ++it) {

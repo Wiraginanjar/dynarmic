@@ -14,8 +14,7 @@
 #include <vector>
 
 #include <mcl/bitsizeof.hpp>
-#include <tsl/robin_map.h>
-#include <tsl/robin_set.h>
+#include <ankerl/unordered_dense.h>
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
 
@@ -88,7 +87,7 @@ public:
     virtual void ClearCache();
 
     /// Invalidates a selection of basic blocks.
-    void InvalidateBasicBlocks(const tsl::robin_set<IR::LocationDescriptor>& locations);
+    void InvalidateBasicBlocks(const ankerl::unordered_dense::set<IR::LocationDescriptor>& locations);
 
 protected:
     // Microinstruction emitters
@@ -138,8 +137,8 @@ protected:
     // State
     BlockOfCode& code;
     ExceptionHandler exception_handler;
-    tsl::robin_map<IR::LocationDescriptor, BlockDescriptor> block_descriptors;
-    tsl::robin_map<IR::LocationDescriptor, PatchInformation> patch_information;
+    ankerl::unordered_dense::map<IR::LocationDescriptor, BlockDescriptor> block_descriptors;
+    ankerl::unordered_dense::map<IR::LocationDescriptor, PatchInformation> patch_information;
 };
 
 }  // namespace Dynarmic::Backend::X64

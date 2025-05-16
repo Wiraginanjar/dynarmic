@@ -11,7 +11,7 @@
 #include <mcl/bit/bit_field.hpp>
 #include <mcl/scope_exit.hpp>
 #include <mcl/stdint.hpp>
-#include <tsl/robin_set.h>
+#include <ankerl/unordered_dense.h>
 
 #include "dynarmic/backend/x64/block_of_code.h"
 #include "dynarmic/backend/x64/nzcv_util.h"
@@ -394,7 +394,7 @@ void EmitX64::ClearCache() {
     PerfMapClear();
 }
 
-void EmitX64::InvalidateBasicBlocks(const tsl::robin_set<IR::LocationDescriptor>& locations) {
+void EmitX64::InvalidateBasicBlocks(const ankerl::unordered_dense::set<IR::LocationDescriptor>& locations) {
     code.EnableWriting();
     SCOPE_EXIT {
         code.DisableWriting();

@@ -13,9 +13,6 @@
 [submodule "oaknut"]
 	path = externals/oaknut
 	url = https://git.eden-emu.dev/eden-emu/oaknut.git
-[submodule "robin-map"]
-	path = externals/robin-map
-	url = https://git.eden-emu.dev/eden-emu/robin-map.git
 [submodule "xbyak"]
 	path = externals/xbyak
 	url = https://git.eden-emu.dev/eden-emu/xbyak.git
@@ -25,3 +22,6 @@
 [submodule "zydis"]
 	path = externals/zydis
 	url = https://git.eden-emu.dev/eden-emu/zydis.git
+[submodule "unordered_dense"]
+	path = externals/unordered_dense
+	url = https://github.com/Lizzie841/unordered_dense.git
