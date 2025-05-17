@@ -262,6 +262,7 @@ if ("A64" IN_LIST DYNARMIC_FRONTENDS)
 endif()
 
 if ("x86_64" IN_LIST ARCHITECTURE)
+    target_compile_definitions(dynarmic PRIVATE XBYAK_OLD_DISP_CHECK=1)
     target_link_libraries(dynarmic
         PRIVATE
             xbyak::xbyak
