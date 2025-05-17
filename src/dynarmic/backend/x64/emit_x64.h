@@ -35,6 +35,7 @@ enum class OptimizationFlag : u32;
 
 namespace Dynarmic::Backend::X64 {
 
+class A64EmitX64;
 class BlockOfCode;
 
 using A64FullVectorWidth = std::integral_constant<size_t, 128>;
@@ -139,6 +140,9 @@ protected:
     ExceptionHandler exception_handler;
     ankerl::unordered_dense::map<IR::LocationDescriptor, BlockDescriptor> block_descriptors;
     ankerl::unordered_dense::map<IR::LocationDescriptor, PatchInformation> patch_information;
+
+    // We need materialized protected members
+    friend class A64EmitX64;
 };
 
 }  // namespace Dynarmic::Backend::X64

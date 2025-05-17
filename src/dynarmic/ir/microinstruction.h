@@ -150,13 +150,15 @@ private:
     void Use(const Value& value);
     void UndoUse(const Value& value);
 
-    Opcode op;
-    unsigned use_count = 0;
-    unsigned name = 0;
-    std::array<Value, max_arg_count> args;
-
+    // TODO: so much padding wasted with mcl::intrusive_node
+    // 16 + 1, 24
+    Opcode op; //2 (6)
     // Linked list of pseudooperations associated with this instruction.
-    Inst* next_pseudoop = nullptr;
+    Inst* next_pseudoop = nullptr; //8 (14)
+    unsigned use_count = 0; //4 (0)
+    unsigned name = 0; //4 (4)
+    alignas(64) std::array<Value, max_arg_count> args; //16 * 4 = 64 (1 cache line)
 };
+static_assert(sizeof(Inst) == 128);
 
 }  // namespace Dynarmic::IR

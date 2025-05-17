@@ -71,9 +71,10 @@ DecodeTable<V> GetDecodeTable() {
 
 template<typename V>
 std::optional<std::reference_wrapper<const Matcher<V>>> Decode(u32 instruction) {
-    static const auto table = GetDecodeTable<V>();
-
-    const auto matches_instruction = [instruction](const auto& matcher) { return matcher.Matches(instruction); };
+    alignas(64) static const auto table = GetDecodeTable<V>();
+    const auto matches_instruction = [instruction](const auto& matcher) {
+        return matcher.Matches(instruction);
+    };
 
     const auto& subtable = table[detail::ToFastLookupIndex(instruction)];
     auto iter = std::find_if(subtable.begin(), subtable.end(), matches_instruction);

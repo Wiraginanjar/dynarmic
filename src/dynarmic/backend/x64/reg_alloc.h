@@ -52,19 +52,20 @@ public:
     void EmitVerboseDebuggingOutput(BlockOfCode& code, size_t host_loc_index) const;
 
 private:
+//non trivial
+    std::vector<IR::Inst*> values;
+//sometimes zeroed
+    size_t accumulated_uses = 0;
+    // Block state
+    size_t total_uses = 0;
+    // Value state
+    size_t max_bit_width = 0;
+//always zeroed
     // Current instruction state
     size_t is_being_used_count = 0;
+    size_t current_references = 0;
     bool is_scratch = false;
     bool is_set_last_use = false;
-
-    // Block state
-    size_t current_references = 0;
-    size_t accumulated_uses = 0;
-    size_t total_uses = 0;
-
-    // Value state
-    std::vector<IR::Inst*> values;
-    size_t max_bit_width = 0;
 };
 
 struct Argument {
