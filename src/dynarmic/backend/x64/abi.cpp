@@ -6,7 +6,6 @@
 #include "dynarmic/backend/x64/abi.h"
 
 #include <algorithm>
-#include <vector>
 
 #include <mcl/iterator/reverse.hpp>
 #include <mcl/stdint.hpp>
@@ -19,20 +18,19 @@ namespace Dynarmic::Backend::X64 {
 constexpr size_t XMM_SIZE = 16;
 
 struct FrameInfo {
-    size_t stack_subtraction;
-    size_t xmm_offset;
-    size_t frame_offset;
+    std::size_t stack_subtraction;
+    std::size_t xmm_offset;
+    std::size_t frame_offset;
 };
+static_assert(ABI_SHADOW_SPACE <= 32);
 
-static FrameInfo CalculateFrameInfo(size_t num_gprs, size_t num_xmms, size_t frame_size) {
+static FrameInfo CalculateFrameInfo(const size_t num_gprs, const size_t num_xmms, size_t frame_size) {
     // We are initially 8 byte aligned because the return value is pushed onto an aligned stack after a call.
     const size_t rsp_alignment = (num_gprs % 2 == 0) ? 8 : 0;
     const size_t total_xmm_size = num_xmms * XMM_SIZE;
-
     if (frame_size & 0xF) {
         frame_size += 0x10 - (frame_size & 0xF);
     }
-
     return {
         rsp_alignment + total_xmm_size + frame_size + ABI_SHADOW_SPACE,
         frame_size + ABI_SHADOW_SPACE,
@@ -41,15 +39,14 @@ static FrameInfo CalculateFrameInfo(size_t num_gprs, size_t num_xmms, size_t fra
 }
 
 template<typename RegisterArrayT>
-void ABI_PushRegistersAndAdjustStack(BlockOfCode& code, size_t frame_size, const RegisterArrayT& regs) {
+void ABI_PushRegistersAndAdjustStack(BlockOfCode& code, const size_t frame_size, const RegisterArrayT& regs) {
     using namespace Xbyak::util;
 
     const size_t num_gprs = std::count_if(regs.begin(), regs.end(), HostLocIsGPR);
     const size_t num_xmms = std::count_if(regs.begin(), regs.end(), HostLocIsXMM);
+    const FrameInfo frame_info = CalculateFrameInfo(num_gprs, num_xmms, frame_size);
 
-    FrameInfo frame_info = CalculateFrameInfo(num_gprs, num_xmms, frame_size);
-
-    for (HostLoc gpr : regs) {
+    for (auto const gpr : regs) {
         if (HostLocIsGPR(gpr)) {
             code.push(HostLocToReg64(gpr));
         }
@@ -60,7 +57,7 @@ void ABI_PushRegistersAndAdjustStack(BlockOfCode& code, size_t frame_size, const
     }
 
     size_t xmm_offset = frame_info.xmm_offset;
-    for (HostLoc xmm : regs) {
+    for (auto const xmm : regs) {
         if (HostLocIsXMM(xmm)) {
             if (code.HasHostFeature(HostFeature::AVX)) {
                 code.vmovaps(code.xword[rsp + xmm_offset], HostLocToXmm(xmm));
@@ -73,16 +70,15 @@ void ABI_PushRegistersAndAdjustStack(BlockOfCode& code, size_t frame_size, const
 }
 
 template<typename RegisterArrayT>
-void ABI_PopRegistersAndAdjustStack(BlockOfCode& code, size_t frame_size, const RegisterArrayT& regs) {
+void ABI_PopRegistersAndAdjustStack(BlockOfCode& code, const size_t frame_size, const RegisterArrayT& regs) {
     using namespace Xbyak::util;
 
     const size_t num_gprs = std::count_if(regs.begin(), regs.end(), HostLocIsGPR);
     const size_t num_xmms = std::count_if(regs.begin(), regs.end(), HostLocIsXMM);
-
-    FrameInfo frame_info = CalculateFrameInfo(num_gprs, num_xmms, frame_size);
+    const FrameInfo frame_info = CalculateFrameInfo(num_gprs, num_xmms, frame_size);
 
     size_t xmm_offset = frame_info.xmm_offset;
-    for (HostLoc xmm : regs) {
+    for (auto const xmm : regs) {
         if (HostLocIsXMM(xmm)) {
             if (code.HasHostFeature(HostFeature::AVX)) {
                 code.vmovaps(HostLocToXmm(xmm), code.xword[rsp + xmm_offset]);
@@ -97,33 +93,33 @@ void ABI_PopRegistersAndAdjustStack(BlockOfCode& code, size_t frame_size, const 
         code.add(rsp, u32(frame_info.stack_subtraction));
     }
 
-    for (HostLoc gpr : mcl::iterator::reverse(regs)) {
+    for (auto const gpr : mcl::iterator::reverse(regs)) {
         if (HostLocIsGPR(gpr)) {
             code.pop(HostLocToReg64(gpr));
         }
     }
 }
 
-void ABI_PushCalleeSaveRegistersAndAdjustStack(BlockOfCode& code, size_t frame_size) {
+void ABI_PushCalleeSaveRegistersAndAdjustStack(BlockOfCode& code, const std::size_t frame_size) {
     ABI_PushRegistersAndAdjustStack(code, frame_size, ABI_ALL_CALLEE_SAVE);
 }
 
-void ABI_PopCalleeSaveRegistersAndAdjustStack(BlockOfCode& code, size_t frame_size) {
+void ABI_PopCalleeSaveRegistersAndAdjustStack(BlockOfCode& code, const std::size_t frame_size) {
     ABI_PopRegistersAndAdjustStack(code, frame_size, ABI_ALL_CALLEE_SAVE);
 }
 
-void ABI_PushCallerSaveRegistersAndAdjustStack(BlockOfCode& code, size_t frame_size) {
+void ABI_PushCallerSaveRegistersAndAdjustStack(BlockOfCode& code, const std::size_t frame_size) {
     ABI_PushRegistersAndAdjustStack(code, frame_size, ABI_ALL_CALLER_SAVE);
 }
 
-void ABI_PopCallerSaveRegistersAndAdjustStack(BlockOfCode& code, size_t frame_size) {
+void ABI_PopCallerSaveRegistersAndAdjustStack(BlockOfCode& code, const std::size_t frame_size) {
     ABI_PopRegistersAndAdjustStack(code, frame_size, ABI_ALL_CALLER_SAVE);
 }
 
 static consteval size_t ABI_AllCallerSaveSize() noexcept {
     return ABI_ALL_CALLER_SAVE.max_size();
 }
-static consteval std::array<HostLoc, ABI_AllCallerSaveSize() - 1> ABI_AllCallerSaveExcept(std::size_t except) noexcept {
+static consteval std::array<HostLoc, ABI_AllCallerSaveSize() - 1> ABI_AllCallerSaveExcept(const std::size_t except) noexcept {
     std::array<HostLoc, ABI_AllCallerSaveSize() - 1> arr;
     for(std::size_t i = 0; i < arr.size(); ++i) {
         arr[i] = static_cast<HostLoc>(i + (i >= except ? 1 : 0));
@@ -131,7 +127,7 @@ static consteval std::array<HostLoc, ABI_AllCallerSaveSize() - 1> ABI_AllCallerS
     return arr;
 }
 
-alignas(64) static constinit std::array<HostLoc, ABI_AllCallerSaveSize() - 1> reg_table[] = {
+alignas(64) static constinit std::array<HostLoc, ABI_AllCallerSaveSize() - 1> ABI_CALLER_SAVED_EXCEPT_TABLE[32] = {
     ABI_AllCallerSaveExcept(0),
     ABI_AllCallerSaveExcept(1),
     ABI_AllCallerSaveExcept(2),
@@ -166,14 +162,14 @@ alignas(64) static constinit std::array<HostLoc, ABI_AllCallerSaveSize() - 1> re
     ABI_AllCallerSaveExcept(31),
 };
 
-void ABI_PushCallerSaveRegistersAndAdjustStackExcept(BlockOfCode& code, HostLoc exception) {
-    assert(size_t(exception) < 32);
-    ABI_PushRegistersAndAdjustStack(code, 0, reg_table[size_t(exception) % 32]);
+void ABI_PushCallerSaveRegistersAndAdjustStackExcept(BlockOfCode& code, const HostLoc exception) {
+    ASSUME(size_t(exception) < 32);
+    ABI_PushRegistersAndAdjustStack(code, 0, ABI_CALLER_SAVED_EXCEPT_TABLE[size_t(exception)]);
 }
 
-void ABI_PopCallerSaveRegistersAndAdjustStackExcept(BlockOfCode& code, HostLoc exception) {
-    assert(size_t(exception) < 32);
-    ABI_PopRegistersAndAdjustStack(code, 0, reg_table[size_t(exception) % 32]);
+void ABI_PopCallerSaveRegistersAndAdjustStackExcept(BlockOfCode& code, const HostLoc exception) {
+    ASSUME(size_t(exception) < 32);
+    ABI_PopRegistersAndAdjustStack(code, 0, ABI_CALLER_SAVED_EXCEPT_TABLE[size_t(exception)]);
 }
 
 }  // namespace Dynarmic::Backend::X64

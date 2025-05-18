@@ -17,6 +17,7 @@
 
 #include "dynarmic/backend/x64/block_of_code.h"
 #include "dynarmic/backend/x64/hostloc.h"
+#include "dynarmic/backend/x64/stack_layout.h"
 #include "dynarmic/backend/x64/oparg.h"
 #include "dynarmic/ir/cond.h"
 #include "dynarmic/ir/microinstruction.h"
@@ -46,27 +47,25 @@ public:
 
     bool ContainsValue(const IR::Inst* inst) const;
     size_t GetMaxBitWidth() const;
-
     void AddValue(IR::Inst* inst);
-
-    void EmitVerboseDebuggingOutput(BlockOfCode& code, size_t host_loc_index) const;
-
+    void EmitVerboseDebuggingOutput(BlockOfCode* code, size_t host_loc_index) const;
 private:
 //non trivial
-    std::vector<IR::Inst*> values;
+    std::vector<IR::Inst*> values; //24
 //sometimes zeroed
-    size_t accumulated_uses = 0;
+    size_t accumulated_uses = 0; //8
     // Block state
-    size_t total_uses = 0;
+    size_t total_uses = 0; //8
     // Value state
-    size_t max_bit_width = 0;
+    size_t max_bit_width = 0; //8
 //always zeroed
     // Current instruction state
-    size_t is_being_used_count = 0;
-    size_t current_references = 0;
-    bool is_scratch = false;
-    bool is_set_last_use = false;
+    size_t is_being_used_count = 0; //8
+    size_t current_references = 0; //8
+    bool is_scratch = false; //1
+    bool is_set_last_use = false; //1
 };
+static_assert(sizeof(HostLocInfo) == 72);
 
 struct Argument {
 public:
@@ -88,34 +87,28 @@ public:
     IR::Cond GetImmediateCond() const;
     IR::AccType GetImmediateAccType() const;
 
-    /// Is this value currently in a GPR?
     bool IsInGpr() const;
-    /// Is this value currently in a XMM?
     bool IsInXmm() const;
-    /// Is this value currently in memory?
     bool IsInMemory() const;
-
 private:
     friend class RegAlloc;
-    explicit Argument(RegAlloc& reg_alloc)
-            : reg_alloc(reg_alloc) {}
+    explicit Argument(RegAlloc& reg_alloc) : reg_alloc(reg_alloc) {}
 
-    bool allocated = false;
-    RegAlloc& reg_alloc;
-    IR::Value value;
+//data
+    IR::Value value; //8
+    RegAlloc& reg_alloc; //8
+    bool allocated = false; //1
 };
 
-// Ensure a cache line is used, this is primordial
-static_assert(sizeof(boost::container::static_vector<HostLoc, 28>) == 64);
 class RegAlloc final {
 public:
     using ArgumentInfo = std::array<Argument, IR::max_arg_count>;
-
-    explicit RegAlloc(BlockOfCode& code, boost::container::static_vector<HostLoc, 28> gpr_order, boost::container::static_vector<HostLoc, 28> xmm_order);
+    RegAlloc() = default;
+    RegAlloc(BlockOfCode* code, boost::container::static_vector<HostLoc, 28> gpr_order, boost::container::static_vector<HostLoc, 28> xmm_order);
 
     ArgumentInfo GetArgumentInfo(IR::Inst* inst);
     void RegisterPseudoOperation(IR::Inst* inst);
-    bool IsValueLive(IR::Inst* inst) const;
+    bool IsValueLive(const IR::Inst* inst) const;
 
     Xbyak::Reg64 UseGpr(Argument& arg);
     Xbyak::Xmm UseXmm(Argument& arg);
@@ -137,27 +130,20 @@ public:
     Xbyak::Xmm ScratchXmm(HostLoc desired_location);
 
     void HostCall(IR::Inst* result_def = nullptr,
-                  std::optional<Argument::copyable_reference> arg0 = {},
-                  std::optional<Argument::copyable_reference> arg1 = {},
-                  std::optional<Argument::copyable_reference> arg2 = {},
-                  std::optional<Argument::copyable_reference> arg3 = {});
+        const std::optional<Argument::copyable_reference> arg0 = {},
+        const std::optional<Argument::copyable_reference> arg1 = {},
+        const std::optional<Argument::copyable_reference> arg2 = {},
+        const std::optional<Argument::copyable_reference> arg3 = {}
+    );
 
     // TODO: Values in host flags
-
-    void AllocStackSpace(size_t stack_space);
-    void ReleaseStackSpace(size_t stack_space);
-
+    void AllocStackSpace(const size_t stack_space);
+    void ReleaseStackSpace(const size_t stack_space);
     void EndOfAllocScope();
-
     void AssertNoMoreUses();
-
     void EmitVerboseDebuggingOutput();
-
 private:
     friend struct Argument;
-
-    boost::container::static_vector<HostLoc, 28> gpr_order;
-    boost::container::static_vector<HostLoc, 28> xmm_order;
 
     HostLoc SelectARegister(const boost::container::static_vector<HostLoc, 28>& desired_locations) const;
     std::optional<HostLoc> ValueLocation(const IR::Inst* value) const;
@@ -176,17 +162,21 @@ private:
 
     void SpillRegister(HostLoc loc);
     HostLoc FindFreeSpill() const;
-
-    std::vector<HostLocInfo> hostloc_info;
     HostLocInfo& LocInfo(HostLoc loc);
     const HostLocInfo& LocInfo(HostLoc loc) const;
 
-    BlockOfCode& code;
-    size_t reserved_stack_space = 0;
     void EmitMove(size_t bit_width, HostLoc to, HostLoc from);
     void EmitExchange(HostLoc a, HostLoc b);
-
     Xbyak::Address SpillToOpArg(HostLoc loc);
+
+//data
+    alignas(64) boost::container::static_vector<HostLoc, 28> gpr_order;
+    alignas(64) boost::container::static_vector<HostLoc, 28> xmm_order;
+    alignas(64) boost::container::static_vector<HostLocInfo, NonSpillHostLocCount + SpillCount> hostloc_info;
+    BlockOfCode* code = nullptr;
+    size_t reserved_stack_space = 0;
 };
+// Ensure a cache line is used, this is primordial
+static_assert(sizeof(boost::container::static_vector<HostLoc, 28>) == 64);
 
 }  // namespace Dynarmic::Backend::X64

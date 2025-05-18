@@ -179,27 +179,24 @@ public:
     }
 
 private:
+    using RunCodeFuncType = HaltReason (*)(void*, CodePtr);
+    static constexpr size_t MXCSR_ALREADY_EXITED = 1 << 0;
+    static constexpr size_t FORCE_RETURN = 1 << 1;
+
     RunCodeCallbacks cb;
     JitStateInfo jsi;
-
-    bool prelude_complete = false;
     CodePtr code_begin = nullptr;
-
 #ifdef _WIN32
     size_t committed_size = 0;
 #endif
-
     ConstantPool constant_pool;
-
-    using RunCodeFuncType = HaltReason (*)(void*, CodePtr);
     RunCodeFuncType run_code = nullptr;
     RunCodeFuncType step_code = nullptr;
-    static constexpr size_t MXCSR_ALREADY_EXITED = 1 << 0;
-    static constexpr size_t FORCE_RETURN = 1 << 1;
     std::array<const void*, 4> return_from_run_code;
-    void GenRunCode(std::function<void(BlockOfCode&)> rcp);
-
+    bool prelude_complete = false;
     const HostFeature host_features;
+
+    void GenRunCode(std::function<void(BlockOfCode&)> rcp);
 };
 
 }  // namespace Dynarmic::Backend::X64

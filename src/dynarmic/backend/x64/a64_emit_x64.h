@@ -14,14 +14,13 @@
 #include "dynarmic/backend/block_range_information.h"
 #include "dynarmic/backend/x64/a64_jitstate.h"
 #include "dynarmic/backend/x64/emit_x64.h"
+#include "dynarmic/backend/x64/reg_alloc.h"
 #include "dynarmic/frontend/A64/a64_location_descriptor.h"
 #include "dynarmic/interface/A64/a64.h"
 #include "dynarmic/interface/A64/config.h"
 #include "dynarmic/ir/terminal.h"
 
 namespace Dynarmic::Backend::X64 {
-
-class RegAlloc;
 
 struct A64EmitContext final : public EmitContext {
     A64EmitContext(const A64::UserConfig& conf, RegAlloc& reg_alloc, IR::Block& block);
@@ -53,10 +52,6 @@ public:
     void InvalidateCacheRanges(const boost::icl::interval_set<u64>& ranges);
 
 protected:
-    const A64::UserConfig conf;
-    A64::Jit* jit_interface;
-    BlockRangeInformation<u64> block_ranges;
-
     struct FastDispatchEntry {
         u64 location_descriptor = 0xFFFF'FFFF'FFFF'FFFFull;
         const void* code_ptr = nullptr;
@@ -64,22 +59,10 @@ protected:
     static_assert(sizeof(FastDispatchEntry) == 0x10);
     static constexpr u64 fast_dispatch_table_mask = 0xFFFFF0;
     static constexpr size_t fast_dispatch_table_size = 0x100000;
-    std::array<FastDispatchEntry, fast_dispatch_table_size> fast_dispatch_table;
+
     void ClearFastDispatchTable();
-
-    void (*memory_read_128)();
-    void (*memory_write_128)();
-    void (*memory_exclusive_write_128)();
     void GenMemory128Accessors();
-
-    std::map<std::tuple<bool, size_t, int, int>, void (*)()> read_fallbacks;
-    std::map<std::tuple<bool, size_t, int, int>, void (*)()> write_fallbacks;
-    std::map<std::tuple<bool, size_t, int, int>, void (*)()> exclusive_write_fallbacks;
     void GenFastmemFallbacks();
-
-    const void* terminal_handler_pop_rsb_hint;
-    const void* terminal_handler_fast_dispatch_hint = nullptr;
-    FastDispatchEntry& (*fast_dispatch_table_lookup)(u64) = nullptr;
     void GenTerminalHandlers();
 
     // Microinstruction emitters
@@ -103,8 +86,6 @@ protected:
         DoNotFastmemMarker marker;
         bool recompile;
     };
-    ankerl::unordered_dense::map<u64, FastmemPatchInfo> fastmem_patch_info;
-    std::set<DoNotFastmemMarker> do_not_fastmem;
     std::optional<DoNotFastmemMarker> ShouldFastmem(A64EmitContext& ctx, IR::Inst* inst) const;
     FakeCall FastmemCallback(u64 rip);
 
@@ -140,6 +121,24 @@ protected:
     void EmitPatchJz(const IR::LocationDescriptor& target_desc, CodePtr target_code_ptr = nullptr) override;
     void EmitPatchJmp(const IR::LocationDescriptor& target_desc, CodePtr target_code_ptr = nullptr) override;
     void EmitPatchMovRcx(CodePtr target_code_ptr = nullptr) override;
+
+//data
+    const A64::UserConfig conf;
+    RegAlloc reg_alloc; //reusable reg alloc
+    BlockRangeInformation<u64> block_ranges;
+    std::array<FastDispatchEntry, fast_dispatch_table_size> fast_dispatch_table;
+    ankerl::unordered_dense::map<u64, FastmemPatchInfo> fastmem_patch_info;
+    std::map<std::tuple<bool, size_t, int, int>, void (*)()> read_fallbacks;
+    std::map<std::tuple<bool, size_t, int, int>, void (*)()> write_fallbacks;
+    std::map<std::tuple<bool, size_t, int, int>, void (*)()> exclusive_write_fallbacks;
+    std::set<DoNotFastmemMarker> do_not_fastmem;
+    const void* terminal_handler_pop_rsb_hint;
+    const void* terminal_handler_fast_dispatch_hint = nullptr;
+    FastDispatchEntry& (*fast_dispatch_table_lookup)(u64) = nullptr;
+    A64::Jit* jit_interface;
+    void (*memory_read_128)();
+    void (*memory_write_128)();
+    void (*memory_exclusive_write_128)();
 };
 
 }  // namespace Dynarmic::Backend::X64

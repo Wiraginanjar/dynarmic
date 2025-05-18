@@ -17,6 +17,7 @@
 #include <ankerl/unordered_dense.h>
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
+#include <boost/container/small_vector.hpp>
 
 #include "dynarmic/backend/exception_handler.h"
 #include "dynarmic/backend/x64/reg_alloc.h"
@@ -77,6 +78,7 @@ public:
         CodePtr entrypoint;  // Entrypoint of emitted code
         size_t size;         // Length in bytes of emitted code
     };
+    static_assert(sizeof(BlockDescriptor) == 16);
 
     explicit EmitX64(BlockOfCode& code);
     virtual ~EmitX64();
@@ -123,10 +125,10 @@ protected:
 
     // Patching
     struct PatchInformation {
-        std::vector<CodePtr> jg;
-        std::vector<CodePtr> jz;
-        std::vector<CodePtr> jmp;
-        std::vector<CodePtr> mov_rcx;
+        boost::container::small_vector<CodePtr, 4> jg; //4*8=32
+        boost::container::small_vector<CodePtr, 4> jz; //4*8=32
+        boost::container::small_vector<CodePtr, 4> jmp; //4*8=32
+        boost::container::small_vector<CodePtr, 4> mov_rcx; //4*8=32
     };
     void Patch(const IR::LocationDescriptor& target_desc, CodePtr target_code_ptr);
     virtual void Unpatch(const IR::LocationDescriptor& target_desc);

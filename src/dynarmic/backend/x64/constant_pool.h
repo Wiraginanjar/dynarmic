@@ -41,9 +41,8 @@ private:
     };
 
     ankerl::unordered_dense::map<ConstantT, void*, ConstantHash> constant_info;
-
-    BlockOfCode& code;
     std::span<ConstantT> pool;
+    BlockOfCode& code;
     std::size_t insertion_point;
 };
 
