@@ -10,6 +10,7 @@
 #include <optional>
 #include <tuple>
 #include <ankerl/unordered_dense.h>
+#include <boost/container/static_vector.hpp>
 
 #include "dynarmic/backend/block_range_information.h"
 #include "dynarmic/backend/x64/a64_jitstate.h"
@@ -41,11 +42,9 @@ public:
     A64EmitX64(BlockOfCode& code, A64::UserConfig conf, A64::Jit* jit_interface);
     ~A64EmitX64() override;
 
-    /**
-     * Emit host machine code for a basic block with intermediate representation `block`.
-     * @note block is modified.
-     */
-    BlockDescriptor Emit(IR::Block& block);
+    /// Emit host machine code for a basic block with intermediate representation `block`.
+    /// @note block is modified.
+    BlockDescriptor Emit(IR::Block& block) noexcept;
 
     void ClearCache() override;
 
@@ -64,7 +63,7 @@ protected:
     void GenMemory128Accessors();
     void GenFastmemFallbacks();
     void GenTerminalHandlers();
-
+    
     // Microinstruction emitters
     void EmitPushRSB(EmitContext& ctx, IR::Inst* inst);
 #define OPCODE(...)
@@ -132,13 +131,13 @@ protected:
     std::map<std::tuple<bool, size_t, int, int>, void (*)()> write_fallbacks;
     std::map<std::tuple<bool, size_t, int, int>, void (*)()> exclusive_write_fallbacks;
     std::set<DoNotFastmemMarker> do_not_fastmem;
-    const void* terminal_handler_pop_rsb_hint;
+    const void* terminal_handler_pop_rsb_hint = nullptr;
     const void* terminal_handler_fast_dispatch_hint = nullptr;
     FastDispatchEntry& (*fast_dispatch_table_lookup)(u64) = nullptr;
-    A64::Jit* jit_interface;
-    void (*memory_read_128)();
-    void (*memory_write_128)();
-    void (*memory_exclusive_write_128)();
+    A64::Jit* jit_interface = nullptr;
+    void (*memory_read_128)() = nullptr;
+    void (*memory_write_128)() = nullptr;
+    void (*memory_exclusive_write_128)() = nullptr;
 };
 
 }  // namespace Dynarmic::Backend::X64

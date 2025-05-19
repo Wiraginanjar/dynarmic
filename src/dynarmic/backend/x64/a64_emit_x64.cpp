@@ -65,8 +65,8 @@ A64EmitX64::A64EmitX64(BlockOfCode& code, A64::UserConfig conf, A64::Jit* jit_in
 
 A64EmitX64::~A64EmitX64() = default;
 
-A64EmitX64::BlockDescriptor A64EmitX64::Emit(IR::Block& block) {
-    if (conf.very_verbose_debugging_output) {
+A64EmitX64::BlockDescriptor A64EmitX64::Emit(IR::Block& block) noexcept {
+    if (conf.very_verbose_debugging_output) [[unlikely]] {
         std::puts(IR::DumpBlock(block).c_str());
     }
 
@@ -91,47 +91,54 @@ A64EmitX64::BlockDescriptor A64EmitX64::Emit(IR::Block& block) {
 
     // Start emitting.
     code.align();
-    const u8* const entrypoint = code.getCurr();
+    const auto* const entrypoint = code.getCurr();
 
-    ASSERT(block.GetCondition() == IR::Cond::AL);
-
-    static void (EmitX64::*opcode_handlers[])(EmitContext& context, IR::Inst* inst) = {
+    DEBUG_ASSERT(block.GetCondition() == IR::Cond::AL);
+    typedef void (EmitX64::*EmitHandlerFn)(EmitContext& context, IR::Inst* inst);
+    constexpr EmitHandlerFn opcode_handlers[] = {
 #define OPCODE(name, type, ...) &EmitX64::Emit##name,
+#define A32OPC(name, type, ...)
+#define A64OPC(name, type, ...)
+#include "dynarmic/ir/opcodes.inc"
+#undef OPCODE
+#undef A32OPC
+#undef A64OPC
+    };
+    typedef void (A64EmitX64::*A64EmitHandlerFn)(A64EmitContext& context, IR::Inst* inst);
+    constexpr A64EmitHandlerFn a64_handlers[] = {
+#define OPCODE(...)
 #define A32OPC(...)
-#define A64OPC(...)
+#define A64OPC(name, type, ...) &A64EmitX64::EmitA64##name,
 #include "dynarmic/ir/opcodes.inc"
 #undef OPCODE
 #undef A32OPC
 #undef A64OPC
     };
 
-    for (auto iter = block.begin(); iter != block.end(); ++iter) {
-        IR::Inst* inst = &*iter;
-
+    for (auto& inst : block) {
+        auto const opcode = inst.GetOpcode();
         // Call the relevant Emit* member function.
-        switch (inst->GetOpcode()) {
-#define OPCODE(name, type, ...)            \
-        case IR::Opcode::name: goto true_opcode_branch;
-#define A32OPC(...)
-#define A64OPC(name, type, ...)               \
-        case IR::Opcode::A64##name:               \
-            A64EmitX64::EmitA64##name(ctx, inst); \
-            break;
+        switch (opcode) {
+#define OPCODE(name, type, ...) [[likely]] case IR::Opcode::name: goto opcode_branch;
+#define A32OPC(name, type, ...)
+#define A64OPC(name, type, ...) [[likely]] case IR::Opcode::A64##name: goto a64_branch;
 #include "dynarmic/ir/opcodes.inc"
 #undef OPCODE
 #undef A32OPC
 #undef A64OPC
-        default:
-            ASSERT_MSG(false, "Invalid opcode: {}", inst->GetOpcode());
-            break;
+        default: [[unlikely]] {
+            ASSERT_MSG(false, "Invalid opcode: {}", opcode);
+            goto finish_this_inst;
         }
-        goto false_opcode_branch;
-true_opcode_branch:
-        (this->*opcode_handlers[size_t(inst->GetOpcode())])(ctx, inst);
-false_opcode_branch:
+        }
+opcode_branch:
+        (this->*opcode_handlers[size_t(opcode)])(ctx, &inst);
+        goto finish_this_inst;
+a64_branch:
+        (this->*a64_handlers[size_t(opcode) - std::size(opcode_handlers)])(ctx, &inst);
+finish_this_inst:
         ctx.reg_alloc.EndOfAllocScope();
-
-        if (conf.very_verbose_debugging_output) {
+        if (conf.very_verbose_debugging_output) [[unlikely]] {
             EmitVerboseDebuggingOutput(reg_alloc);
         }
     }

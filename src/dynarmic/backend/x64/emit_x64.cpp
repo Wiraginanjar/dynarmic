@@ -55,6 +55,10 @@ std::optional<EmitX64::BlockDescriptor> EmitX64::GetBasicBlock(IR::LocationDescr
     return iter->second;
 }
 
+void EmitX64::EmitInvalid(EmitContext&, IR::Inst* inst) {
+    ASSERT_MSG(false, "Invalid opcode: {}", inst->GetOpcode());
+}
+
 void EmitX64::EmitVoid(EmitContext&, IR::Inst*) {
 }
 

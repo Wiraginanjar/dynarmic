@@ -48,6 +48,13 @@ endif()
 # Add the module directory to the list of paths
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMakeModules")
 
+# Arch detection
+include(DetectArchitecture)
+if (NOT DEFINED ARCHITECTURE)
+    message(FATAL_ERROR "Unsupported architecture encountered. Ending CMake generation.")
+endif()
+message(STATUS "Target architecture: ${ARCHITECTURE}")
+
 # Compiler flags
 if (MSVC)
     set(DYNARMIC_CXX_FLAGS
@@ -91,7 +98,12 @@ else()
         -Wextra
         -Wcast-qual
         -pedantic
-        -Wno-missing-braces)
+        -Wno-missing-braces
+        -Wstack-usage=4096)
+
+    if (ARCHITECTURE STREQUAL "x86_64")
+        list(APPEND DYNARMIC_CXX_FLAGS -mtune=core2)
+    endif()
 
     if (DYNARMIC_WARNINGS_AS_ERRORS)
         list(APPEND DYNARMIC_CXX_FLAGS
@@ -119,13 +131,6 @@ else()
         list(APPEND DYNARMIC_CXX_FLAGS -fbracket-depth=1024)
     endif()
 endif()
-
-# Arch detection
-include(DetectArchitecture)
-if (NOT DEFINED ARCHITECTURE)
-    message(FATAL_ERROR "Unsupported architecture encountered. Ending CMake generation.")
-endif()
-message(STATUS "Target architecture: ${ARCHITECTURE}")
 
 # Forced use of individual bundled libraries for non-REQUIRED library is possible with e.g. cmake -DCMAKE_DISABLE_FIND_PACKAGE_fmt=ON ...
 

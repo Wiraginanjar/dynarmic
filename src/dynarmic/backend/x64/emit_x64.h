@@ -101,6 +101,7 @@ protected:
 #undef OPCODE
 #undef A32OPC
 #undef A64OPC
+    void EmitInvalid(EmitContext& ctx, IR::Inst* inst);
 
     // Helpers
     virtual std::string LocationDescriptorToFriendlyName(const IR::LocationDescriptor&) const = 0;

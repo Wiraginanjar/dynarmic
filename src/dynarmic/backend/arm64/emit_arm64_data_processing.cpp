@@ -60,16 +60,15 @@ void EmitIR<IR::Opcode::Pack2x32To1x64>(oaknut::CodeGenerator& code, EmitContext
 template<>
 void EmitIR<IR::Opcode::Pack2x64To1x128>(oaknut::CodeGenerator& code, EmitContext& ctx, IR::Inst* inst) {
     auto args = ctx.reg_alloc.GetArgumentInfo(inst);
-
-    if (args[0].IsInGpr() && args[1].IsInGpr()) {
+    bool const args_in_gpr[] = { args[0].IsInGpr(), args[1].IsInGpr() };
+    if (args_in_gpr[0] && args_in_gpr[1]) {
         auto Xlo = ctx.reg_alloc.ReadX(args[0]);
         auto Xhi = ctx.reg_alloc.ReadX(args[1]);
         auto Qresult = ctx.reg_alloc.WriteQ(inst);
         RegAlloc::Realize(Xlo, Xhi, Qresult);
-
         code.FMOV(Qresult->toD(), Xlo);
         code.MOV(oaknut::VRegSelector{Qresult->index()}.D()[1], Xhi);
-    } else if (args[0].IsInGpr()) {
+    } else if (args_in_gpr[0]) {
         auto Xlo = ctx.reg_alloc.ReadX(args[0]);
         auto Dhi = ctx.reg_alloc.ReadD(args[1]);
         auto Qresult = ctx.reg_alloc.WriteQ(inst);
@@ -77,7 +76,7 @@ void EmitIR<IR::Opcode::Pack2x64To1x128>(oaknut::CodeGenerator& code, EmitContex
 
         code.FMOV(Qresult->toD(), Xlo);
         code.MOV(oaknut::VRegSelector{Qresult->index()}.D()[1], oaknut::VRegSelector{Dhi->index()}.D()[0]);
-    } else if (args[1].IsInGpr()) {
+    } else if (args_in_gpr[1]) {
         auto Dlo = ctx.reg_alloc.ReadD(args[0]);
         auto Xhi = ctx.reg_alloc.ReadX(args[1]);
         auto Qresult = ctx.reg_alloc.WriteQ(inst);
