@@ -605,10 +605,6 @@ bool Inst::AreAllArgsImmediates() const {
     return std::all_of(args.begin(), args.begin() + NumArgs(), [](const auto& value) { return value.IsImmediate(); });
 }
 
-bool Inst::HasAssociatedPseudoOperation() const {
-    return next_pseudoop && !IsAPseudoOperation();
-}
-
 Inst* Inst::GetAssociatedPseudoOperation(Opcode opcode) {
     Inst* pseudoop = next_pseudoop;
     while (pseudoop) {

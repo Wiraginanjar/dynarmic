@@ -22,105 +22,31 @@
 namespace Dynarmic::IR {
 
 Block::Block(const LocationDescriptor& location)
-        : location{location}, end_location{location}, cond{Cond::AL}, instruction_alloc_pool{std::make_unique<Common::Pool>(sizeof(Inst), 4096)} {}
+    : location{location},
+    end_location{location},
+    cond{Cond::AL},
+    instruction_alloc_pool{std::make_unique<std::remove_reference_t<decltype(*instruction_alloc_pool)>>()}
+{
 
-Block::~Block() = default;
-
-Block::Block(Block&&) = default;
-
-Block& Block::operator=(Block&&) = default;
-
-void Block::AppendNewInst(Opcode opcode, std::initializer_list<IR::Value> args) {
-    PrependNewInst(end(), opcode, args);
 }
 
-Block::iterator Block::PrependNewInst(iterator insertion_point, Opcode opcode, std::initializer_list<Value> args) {
+/// Prepends a new instruction to this basic block before the insertion point,
+/// handling any allocations necessary to do so.
+/// @param insertion_point Where to insert the new instruction.
+/// @param op              Opcode representing the instruction to add.
+/// @param args            A sequence of Value instances used as arguments for the instruction.
+/// @returns Iterator to the newly created instruction.
+Block::iterator Block::PrependNewInst(iterator insertion_point, Opcode opcode, std::initializer_list<Value> args) noexcept {
     IR::Inst* inst = new (instruction_alloc_pool->Alloc()) IR::Inst(opcode);
-    ASSERT(args.size() == inst->NumArgs());
-
+    DEBUG_ASSERT(args.size() == inst->NumArgs());
     std::for_each(args.begin(), args.end(), [&inst, index = size_t(0)](const auto& arg) mutable {
         inst->SetArg(index, arg);
         index++;
     });
-
     return instructions.insert_before(insertion_point, inst);
 }
 
-LocationDescriptor Block::Location() const {
-    return location;
-}
-
-LocationDescriptor Block::EndLocation() const {
-    return end_location;
-}
-
-void Block::SetEndLocation(const LocationDescriptor& descriptor) {
-    end_location = descriptor;
-}
-
-Cond Block::GetCondition() const {
-    return cond;
-}
-
-void Block::SetCondition(Cond condition) {
-    cond = condition;
-}
-
-LocationDescriptor Block::ConditionFailedLocation() const {
-    return *cond_failed;
-}
-
-void Block::SetConditionFailedLocation(LocationDescriptor fail_location) {
-    cond_failed = fail_location;
-}
-
-size_t& Block::ConditionFailedCycleCount() {
-    return cond_failed_cycle_count;
-}
-
-const size_t& Block::ConditionFailedCycleCount() const {
-    return cond_failed_cycle_count;
-}
-
-bool Block::HasConditionFailedLocation() const {
-    return cond_failed.has_value();
-}
-
-Block::InstructionList& Block::Instructions() {
-    return instructions;
-}
-
-const Block::InstructionList& Block::Instructions() const {
-    return instructions;
-}
-
-Terminal Block::GetTerminal() const {
-    return terminal;
-}
-
-void Block::SetTerminal(Terminal term) {
-    ASSERT_MSG(!HasTerminal(), "Terminal has already been set.");
-    terminal = std::move(term);
-}
-
-void Block::ReplaceTerminal(Terminal term) {
-    ASSERT_MSG(HasTerminal(), "Terminal has not been set.");
-    terminal = std::move(term);
-}
-
-bool Block::HasTerminal() const {
-    return terminal.which() != 0;
-}
-
-size_t& Block::CycleCount() {
-    return cycle_count;
-}
-
-const size_t& Block::CycleCount() const {
-    return cycle_count;
-}
-
-static std::string TerminalToString(const Terminal& terminal_variant) {
+static std::string TerminalToString(const Terminal& terminal_variant) noexcept {
     struct : boost::static_visitor<std::string> {
         std::string operator()(const Term::Invalid&) const {
             return "<invalid terminal>";
@@ -153,11 +79,10 @@ static std::string TerminalToString(const Terminal& terminal_variant) {
             return fmt::format("CheckHalt{{{}}}", TerminalToString(terminal.else_));
         }
     } visitor;
-
     return boost::apply_visitor(visitor, terminal_variant);
 }
 
-std::string DumpBlock(const IR::Block& block) {
+std::string DumpBlock(const IR::Block& block) noexcept {
     std::string ret;
 
     ret += fmt::format("Block: location={}\n", block.Location());

@@ -19,14 +19,12 @@ enum class Type;
 
 constexpr size_t max_arg_count = 4;
 
-/**
- * A representation of a microinstruction. A single ARM/Thumb instruction may be
- * converted into zero or more microinstructions.
- */
+/// A representation of a microinstruction. A single ARM/Thumb instruction may be
+/// converted into zero or more microinstructions.
+//class Inst final {
 class Inst final : public mcl::intrusive_list_node<Inst> {
 public:
-    explicit Inst(Opcode op)
-            : op(op) {}
+    explicit Inst(Opcode op) : op(op) {}
 
     /// Determines whether or not this instruction performs an arithmetic shift.
     bool IsArithmeticShift() const;
@@ -122,7 +120,9 @@ public:
     bool HasUses() const { return use_count > 0; }
 
     /// Determines if there is a pseudo-operation associated with this instruction.
-    bool HasAssociatedPseudoOperation() const;
+    inline bool HasAssociatedPseudoOperation() const noexcept {
+        return next_pseudoop && !IsAPseudoOperation();
+    }
     /// Gets a pseudo-operation associated with this instruction.
     Inst* GetAssociatedPseudoOperation(Opcode opcode);
 
