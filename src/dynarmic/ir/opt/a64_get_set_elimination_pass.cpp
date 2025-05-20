@@ -72,7 +72,8 @@ void A64GetSetElimination(IR::Block& block) {
     };
 
     for (auto inst = block.begin(); inst != block.end(); ++inst) {
-        switch (inst->GetOpcode()) {
+        auto const opcode = inst->GetOpcode();
+        switch (opcode) {
         case IR::Opcode::A64GetW: {
             const size_t index = A64::RegNumber(inst->GetArg(0).GetA64RegRef());
             do_get(reg_info.at(index), inst, TrackingType::W);
@@ -144,10 +145,10 @@ void A64GetSetElimination(IR::Block& block) {
             break;
         }
         default: {
-            if (inst->ReadsFromCPSR() || inst->WritesToCPSR()) {
+            if (ReadsFromCPSR(opcode) || WritesToCPSR(opcode)) {
                 nzcv_info = {};
             }
-            if (inst->ReadsFromCoreRegister() || inst->WritesToCoreRegister()) {
+            if (ReadsFromCoreRegister(opcode) || WritesToCoreRegister(opcode)) {
                 reg_info = {};
                 vec_info = {};
                 sp_info = {};

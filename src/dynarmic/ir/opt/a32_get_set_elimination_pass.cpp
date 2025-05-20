@@ -68,7 +68,8 @@ void FlagsPass(IR::Block& block) {
     A32::IREmitter ir{block, A32::LocationDescriptor{block.Location()}, {}};
 
     for (auto inst = block.rbegin(); inst != block.rend(); ++inst) {
-        switch (inst->GetOpcode()) {
+        auto const opcode = inst->GetOpcode();
+        switch (opcode) {
         case IR::Opcode::A32GetCFlag: {
             do_get(c_flag, inst);
             break;
@@ -167,7 +168,7 @@ void FlagsPass(IR::Block& block) {
             break;
         }
         default: {
-            if (inst->ReadsFromCPSR() || inst->WritesToCPSR()) {
+            if (ReadsFromCPSR(opcode) || WritesToCPSR(opcode)) {
                 nzcvq = {};
                 nzcv = {};
                 nz = {};
@@ -254,7 +255,8 @@ void RegisterPass(IR::Block& block) {
     A32::IREmitter ir{block, A32::LocationDescriptor{block.Location()}, {}};
 
     for (auto inst = block.begin(); inst != block.end(); ++inst) {
-        switch (inst->GetOpcode()) {
+        auto const opcode = inst->GetOpcode();
+        switch (opcode) {
         case IR::Opcode::A32GetRegister: {
             const A32::Reg reg = inst->GetArg(0).GetA32RegRef();
             ASSERT(reg != A32::Reg::PC);
@@ -357,7 +359,7 @@ void RegisterPass(IR::Block& block) {
             break;
         }
         default: {
-            if (inst->ReadsFromCoreRegister() || inst->WritesToCoreRegister()) {
+            if (ReadsFromCoreRegister(opcode) || WritesToCoreRegister(opcode)) {
                 reg_info = {};
                 ext_reg_info = {};
             }

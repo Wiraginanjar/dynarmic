@@ -17,9 +17,9 @@ namespace Dynarmic::IR {
 namespace OpcodeInfo {
 
 struct Meta {
+    std::vector<Type> arg_types;
     const char* name;
     Type type;
-    std::vector<Type> arg_types;
 };
 
 constexpr Type Void = Type::Void;
@@ -40,10 +40,10 @@ constexpr Type Cond = Type::Cond;
 constexpr Type Table = Type::Table;
 constexpr Type AccType = Type::AccType;
 
-static const std::array opcode_info{
-#define OPCODE(name, type, ...) Meta{#name, type, {__VA_ARGS__}},
-#define A32OPC(name, type, ...) Meta{#name, type, {__VA_ARGS__}},
-#define A64OPC(name, type, ...) Meta{#name, type, {__VA_ARGS__}},
+alignas(64) static const std::array opcode_info{
+#define OPCODE(name, type, ...) Meta{{__VA_ARGS__}, #name, type},
+#define A32OPC(name, type, ...) Meta{{__VA_ARGS__}, #name, type},
+#define A64OPC(name, type, ...) Meta{{__VA_ARGS__}, #name, type},
 #include "./opcodes.inc"
 #undef OPCODE
 #undef A32OPC
@@ -52,20 +52,24 @@ static const std::array opcode_info{
 
 }  // namespace OpcodeInfo
 
-Type GetTypeOf(Opcode op) {
-    return OpcodeInfo::opcode_info.at(static_cast<size_t>(op)).type;
+/// @brief Get return type of an opcode
+Type GetTypeOf(Opcode op) noexcept {
+    return OpcodeInfo::opcode_info.at(size_t(op)).type;
 }
 
-size_t GetNumArgsOf(Opcode op) {
-    return OpcodeInfo::opcode_info.at(static_cast<size_t>(op)).arg_types.size();
+/// @brief Get the number of arguments an opcode accepts
+size_t GetNumArgsOf(Opcode op) noexcept {
+    return OpcodeInfo::opcode_info.at(size_t(op)).arg_types.size();
 }
 
-Type GetArgTypeOf(Opcode op, size_t arg_index) {
-    return OpcodeInfo::opcode_info.at(static_cast<size_t>(op)).arg_types.at(arg_index);
+/// @brief Get the required type of an argument of an opcode
+Type GetArgTypeOf(Opcode op, size_t arg_index) noexcept {
+    return OpcodeInfo::opcode_info.at(size_t(op)).arg_types.at(arg_index);
 }
 
-std::string GetNameOf(Opcode op) {
-    return OpcodeInfo::opcode_info.at(static_cast<size_t>(op)).name;
+/// @brief Get the name of an opcode.
+std::string GetNameOf(Opcode op) noexcept {
+    return OpcodeInfo::opcode_info.at(size_t(op)).name;
 }
 
 }  // namespace Dynarmic::IR

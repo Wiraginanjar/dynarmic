@@ -11,6 +11,7 @@
 #include <mcl/stdint.hpp>
 
 #include "dynarmic/ir/value.h"
+#include "dynarmic/ir/opcodes.h"
 
 namespace Dynarmic::IR {
 
@@ -26,94 +27,7 @@ class Inst final : public mcl::intrusive_list_node<Inst> {
 public:
     explicit Inst(Opcode op) : op(op) {}
 
-    /// Determines whether or not this instruction performs an arithmetic shift.
-    bool IsArithmeticShift() const;
-    /// Determines whether or not this instruction performs a logical shift.
-    bool IsLogicalShift() const;
-    /// Determines whether or not this instruction performs a circular shift.
-    bool IsCircularShift() const;
-    /// Determines whether or not this instruction performs any kind of shift.
-    bool IsShift() const;
-
-    /// Determines whether or not this instruction is a form of barrier.
-    bool IsBarrier() const;
-
-    /// Determines whether or not this instruction performs a shared memory read.
-    bool IsSharedMemoryRead() const;
-    /// Determines whether or not this instruction performs a shared memory write.
-    bool IsSharedMemoryWrite() const;
-    /// Determines whether or not this instruction performs a shared memory read or write.
-    bool IsSharedMemoryReadOrWrite() const;
-    /// Determines whether or not this instruction performs an atomic memory read.
-    bool IsExclusiveMemoryRead() const;
-    /// Determines whether or not this instruction performs an atomic memory write.
-    bool IsExclusiveMemoryWrite() const;
-
-    /// Determines whether or not this instruction performs any kind of memory read.
-    bool IsMemoryRead() const;
-    /// Determines whether or not this instruction performs any kind of memory write.
-    bool IsMemoryWrite() const;
-    /// Determines whether or not this instruction performs any kind of memory access.
-    bool IsMemoryReadOrWrite() const;
-
-    /// Determines whether or not this instruction reads from the CPSR.
-    bool ReadsFromCPSR() const;
-    /// Determines whether or not this instruction writes to the CPSR.
-    bool WritesToCPSR() const;
-
-    /// Determines whether or not this instruction writes to a system register.
-    bool WritesToSystemRegister() const;
-
-    /// Determines whether or not this instruction reads from a core register.
-    bool ReadsFromCoreRegister() const;
-    /// Determines whether or not this instruction writes to a core register.
-    bool WritesToCoreRegister() const;
-
-    /// Determines whether or not this instruction reads from the FPCR.
-    bool ReadsFromFPCR() const;
-    /// Determines whether or not this instruction writes to the FPCR.
-    bool WritesToFPCR() const;
-
-    /// Determines whether or not this instruction reads from the FPSR.
-    bool ReadsFromFPSR() const;
-    /// Determines whether or not this instruction writes to the FPSR.
-    bool WritesToFPSR() const;
-
-    /// Determines whether or not this instruction reads from the FPSR cumulative exception bits.
-    bool ReadsFromFPSRCumulativeExceptionBits() const;
-    /// Determines whether or not this instruction writes to the FPSR cumulative exception bits.
-    bool WritesToFPSRCumulativeExceptionBits() const;
-    /// Determines whether or not this instruction both reads from and writes to the FPSR cumulative exception bits.
-    bool ReadsFromAndWritesToFPSRCumulativeExceptionBits() const;
-
-    /// Determines whether or not this instruction reads from the FPSR cumulative saturation bit.
-    bool ReadsFromFPSRCumulativeSaturationBit() const;
-    /// Determines whether or not this instruction writes to the FPSR cumulative saturation bit.
-    bool WritesToFPSRCumulativeSaturationBit() const;
-
-    /// Determines whether or not this instruction alters memory-exclusivity.
-    bool AltersExclusiveState() const;
-
-    /// Determines whether or not this instruction accesses a coprocessor.
-    bool IsCoprocessorInstruction() const;
-
-    /// Determines whether or not this instruction causes a CPU exception.
-    bool CausesCPUException() const;
-
-    /// Determines whether or not this instruction is a SetCheckBit operation.
-    bool IsSetCheckBitOperation() const;
-
-    /// Determines whether or not this instruction may have side-effects.
-    bool MayHaveSideEffects() const;
-
-    /// Determines whether or not this instruction is a pseduo-instruction.
-    /// Pseudo-instructions depend on their parent instructions for their semantics.
-    bool IsAPseudoOperation() const;
-
-    /// Determines whether or not this instruction supports the GetNZCVFromOp pseudo-operation.
-    bool MayGetNZCVFromOp() const;
-
-    /// Determines if all arguments of this instruction are immediates.
+    /// @brief Determines if all arguments of this instruction are immediates.
     bool AreAllArgsImmediates() const;
 
     size_t UseCount() const { return use_count; }
@@ -121,7 +35,7 @@ public:
 
     /// Determines if there is a pseudo-operation associated with this instruction.
     inline bool HasAssociatedPseudoOperation() const noexcept {
-        return next_pseudoop && !IsAPseudoOperation();
+        return next_pseudoop && !IsAPseudoOperation(op);
     }
     /// Gets a pseudo-operation associated with this instruction.
     Inst* GetAssociatedPseudoOperation(Opcode opcode);
@@ -131,12 +45,21 @@ public:
     /// Get the type this instruction returns.
     Type GetType() const;
     /// Get the number of arguments this instruction has.
-    size_t NumArgs() const;
+    inline size_t NumArgs() const noexcept {
+        return GetNumArgsOf(op);
+    }
 
-    Value GetArg(size_t index) const;
-    void SetArg(size_t index, Value value);
+    inline Value GetArg(size_t index) const noexcept {
+        DEBUG_ASSERT_MSG(index < GetNumArgsOf(op), "Inst::GetArg: index {} >= number of arguments of {} ({})", index, op, GetNumArgsOf(op));
+        DEBUG_ASSERT_MSG(!args[index].IsEmpty() || GetArgTypeOf(op, index) == IR::Type::Opaque, "Inst::GetArg: index {} is empty", index, args[index].GetType());
+        return args[index];
+    }
+    void SetArg(size_t index, Value value) noexcept;
 
-    void Invalidate();
+    inline void Invalidate() noexcept {
+        ClearArgs();
+        op = Opcode::Void;
+    }
     void ClearArgs();
 
     void ReplaceUsesWith(Value replacement);

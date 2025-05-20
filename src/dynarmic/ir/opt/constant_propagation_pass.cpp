@@ -117,14 +117,14 @@ void FoldAdd(IR::Inst& inst, bool is_32_bit) {
     }
 }
 
-// Folds AND operations based on the following:
-//
-// 1. imm_x & imm_y -> result
-// 2. x & 0 -> 0
-// 3. 0 & y -> 0
-// 4. x & y -> y (where x has all bits set to 1)
-// 5. x & y -> x (where y has all bits set to 1)
-//
+/// Folds AND operations based on the following:
+///
+/// 1. imm_x & imm_y -> result
+/// 2. x & 0 -> 0
+/// 3. 0 & y -> 0
+/// 4. x & y -> y (where x has all bits set to 1)
+/// 5. x & y -> x (where y has all bits set to 1)
+///
 void FoldAND(IR::Inst& inst, bool is_32_bit) {
     if (FoldCommutative(inst, is_32_bit, [](u64 a, u64 b) { return a & b; })) {
         const auto rhs = inst.GetArg(1);
@@ -136,10 +136,10 @@ void FoldAND(IR::Inst& inst, bool is_32_bit) {
     }
 }
 
-// Folds byte reversal opcodes based on the following:
-//
-// 1. imm -> swap(imm)
-//
+/// Folds byte reversal opcodes based on the following:
+///
+/// 1. imm -> swap(imm)
+///
 void FoldByteReverse(IR::Inst& inst, Op op) {
     const auto operand = inst.GetArg(0);
 
@@ -159,12 +159,12 @@ void FoldByteReverse(IR::Inst& inst, Op op) {
     }
 }
 
-// Folds division operations based on the following:
-//
-// 1. x / 0 -> 0 (NOTE: This is an ARM-specific behavior defined in the architecture reference manual)
-// 2. imm_x / imm_y -> result
-// 3. x / 1 -> x
-//
+/// Folds division operations based on the following:
+///
+/// 1. x / 0 -> 0 (NOTE: This is an ARM-specific behavior defined in the architecture reference manual)
+/// 2. imm_x / imm_y -> result
+/// 3. x / 1 -> x
+///
 void FoldDivide(IR::Inst& inst, bool is_32_bit, bool is_signed) {
     const auto rhs = inst.GetArg(1);
 

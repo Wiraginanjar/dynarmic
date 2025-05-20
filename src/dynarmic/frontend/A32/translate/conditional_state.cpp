@@ -17,14 +17,15 @@
 
 namespace Dynarmic::A32 {
 
-bool CondCanContinue(ConditionalState cond_state, const A32::IREmitter& ir) {
+bool CondCanContinue(const ConditionalState cond_state, const A32::IREmitter& ir) {
     ASSERT_MSG(cond_state != ConditionalState::Break, "Should never happen.");
-
     if (cond_state == ConditionalState::None)
         return true;
 
     // TODO: This is more conservative than necessary.
-    return std::all_of(ir.block.begin(), ir.block.end(), [](const IR::Inst& inst) { return !inst.WritesToCPSR(); });
+    return std::all_of(ir.block.begin(), ir.block.end(), [](const IR::Inst& inst) {
+        return !WritesToCPSR(inst.GetOpcode());
+    });
 }
 
 bool IsConditionPassed(TranslatorVisitor& v, IR::Cond cond) {

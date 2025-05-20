@@ -8,6 +8,7 @@
 
 #include <mcl/assert.hpp>
 #include <mcl/stdint.hpp>
+#include <ankerl/unordered_dense.h>
 
 #include "dynarmic/ir/basic_block.h"
 #include "dynarmic/ir/microinstruction.h"
@@ -29,7 +30,7 @@ void VerificationPass(const IR::Block& block) {
         }
     }
 
-    std::map<IR::Inst*, size_t> actual_uses;
+    ankerl::unordered_dense::map<IR::Inst*, size_t> actual_uses;
     for (const auto& inst : block) {
         for (size_t i = 0; i < inst.NumArgs(); i++) {
             const auto arg = inst.GetArg(i);

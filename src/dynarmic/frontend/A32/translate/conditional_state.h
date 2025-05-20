@@ -27,7 +27,7 @@ enum class ConditionalState {
     Trailing,
 };
 
-bool CondCanContinue(ConditionalState cond_state, const A32::IREmitter& ir);
+bool CondCanContinue(const ConditionalState cond_state, const A32::IREmitter& ir);
 bool IsConditionPassed(TranslatorVisitor& v, IR::Cond cond);
 
 }  // namespace Dynarmic::A32
