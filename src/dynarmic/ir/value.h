@@ -52,10 +52,10 @@ public:
 
     static Value EmptyNZCVImmediateMarker();
 
-    inline bool IsIdentity() const noexcept;
-    inline bool IsEmpty() const noexcept;
-    inline bool IsImmediate() const noexcept;
-    inline Type GetType() const noexcept;
+    bool IsIdentity() const noexcept;
+    bool IsEmpty() const noexcept;
+    bool IsImmediate() const noexcept;
+    Type GetType() const noexcept;
 
     Inst* GetInst() const;
     Inst* GetInstRecursive() const;

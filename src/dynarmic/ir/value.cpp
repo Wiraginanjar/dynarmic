@@ -85,23 +85,24 @@ Value Value::EmptyNZCVImmediateMarker() {
     return result;
 }
 
-inline bool Value::IsIdentity() const noexcept {
+/// @brief ?
+bool Value::IsIdentity() const noexcept {
     if (type == Type::Opaque)
         return inner.inst->GetOpcode() == Opcode::Identity;
     return false;
 }
 
-inline bool Value::IsEmpty() const noexcept {
+bool Value::IsEmpty() const noexcept {
     return type == Type::Void;
 }
 
-inline bool Value::IsImmediate() const noexcept {
+bool Value::IsImmediate() const noexcept {
     if (IsIdentity())
         return inner.inst->GetArg(0).IsImmediate();
     return type != Type::Opaque;
 }
 
-inline Type Value::GetType() const noexcept {
+Type Value::GetType() const noexcept {
     if (IsIdentity())
         return inner.inst->GetArg(0).GetType();
     if (type == Type::Opaque)
