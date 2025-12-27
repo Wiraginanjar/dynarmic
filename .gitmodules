@@ -1,27 +1,27 @@
 [submodule "biscuit"]
 	path = externals/biscuit
-	url = https://git.eden-emu.dev/eden-emu/biscuit.git
+	url = https://github.com/lioncash/biscuit.git
 [submodule "catch"]
 	path = externals/catch
-	url = https://git.eden-emu.dev/eden-emu/Catch2.git
+	url = https://github.com/catchorg/Catch2.git
 [submodule "fmt"]
 	path = externals/fmt
-	url = https://git.eden-emu.dev/eden-emu/fmt.git
+	url = https://github.com/fmtlib/fmt.git
 [submodule "mcl"]
 	path = externals/mcl
-	url = https://git.eden-emu.dev/eden-emu/mcl.git
+	url = https://github.com/azahar-emu/mcl.git
 [submodule "oaknut"]
 	path = externals/oaknut
-	url = https://git.eden-emu.dev/eden-emu/oaknut.git
+	url = https://github.com/merryhime/oaknut.git
 [submodule "xbyak"]
 	path = externals/xbyak
-	url = https://git.eden-emu.dev/eden-emu/xbyak.git
+	url = https://github.com/herumi/xbyak.git
 [submodule "zycore"]
 	path = externals/zycore
-	url = https://git.eden-emu.dev/eden-emu/zycore-c.git
+	url = https://github.com/zyantific/zycore-c.git
 [submodule "zydis"]
 	path = externals/zydis
-	url = https://git.eden-emu.dev/eden-emu/zydis.git
+	url = https://github.com/zyantific/zydis.git
 [submodule "unordered_dense"]
 	path = externals/unordered_dense
-	url = https://github.com/Lizzie841/unordered_dense.git
+	url = https://github.com/martinus/unordered_dense.git
